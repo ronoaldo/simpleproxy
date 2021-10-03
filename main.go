@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -222,6 +223,14 @@ func (c *fsCache) Get(key string) (blob io.ReadCloser, h http.Header, err error)
 	if err = json.Unmarshal(hb, &h); err != nil {
 		log.Printf("[fscache] error decoding headers: %v", err)
 		return
+	}
+	// If upstream did not provide valid headers, or we failed to store them,
+	// fix the content type and length ones to avoid 502 bad gateway.
+	if h.Get("content-length") == "" {
+		h.Set("content-length", strconv.Itoa(len(b)))
+	}
+	if h.Get("content-type") == "" {
+		h.Set("content-type", "application/octet-stream")
 	}
 	log.Printf("[fscache] Cache hit!")
 	blob = io.NopCloser(bytes.NewBuffer(b))
