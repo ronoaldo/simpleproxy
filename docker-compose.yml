@@ -6,9 +6,5 @@ services:
     image: ghcr.io/ronoaldo/simpleproxy:latest
     command: --upstream https://content.minetest.net
     restart: always
-    ports:
-      - "8081:8080"
     volumes:
       - "./data/:/var/cache/proxy"
-    environment:
-      - ".env"
