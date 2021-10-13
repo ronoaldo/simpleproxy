@@ -193,8 +193,11 @@ func (c *fsCache) Put(key string, blob io.ReadCloser, h http.Header) (err error)
 
 	// Save headers
 	aux := make(http.Header)
-	aux.Set("content-type", h.Get("content-type"))
-	aux.Set("content-length", h.Get("content-length"))
+	for _, k := range []string{"content-type", "content-length"} {
+		if h.Get(k) != "" {
+			aux.Set(k, h.Get(k))
+		}
+	}
 	hfd, err := os.Create(key + ".headers")
 	if err != nil {
 		return err
@@ -228,9 +231,6 @@ func (c *fsCache) Get(key string) (blob io.ReadCloser, h http.Header, err error)
 	// fix the content type and length ones to avoid 502 bad gateway.
 	if h.Get("content-length") == "" {
 		h.Set("content-length", strconv.Itoa(len(b)))
-	}
-	if h.Get("content-type") == "" {
-		h.Set("content-type", "application/octet-stream")
 	}
 	log.Printf("[fscache] Cache hit!")
 	blob = io.NopCloser(bytes.NewBuffer(b))
